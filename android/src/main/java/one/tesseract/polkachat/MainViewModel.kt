@@ -7,16 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
-import one.tesseract.exception.UserCancelledException
-import one.tesseract.polkachat.rust.Core
 
 //TODO: double check that errors are caught everywhere
 class MainViewModel(private val core: Core) : ViewModel() {
@@ -26,56 +19,50 @@ class MainViewModel(private val core: Core) : ViewModel() {
     private val _account = mutableStateOf<String?>(null)
     val account: State<String?> = _account
 
-    private val _failure = Channel<String>()
-    val failure: Flow<String> = _failure.receiveAsFlow()
+    private val _failure = Channel<Throwable>()
+    val failure: Flow<Throwable> = _failure.receiveAsFlow()
 
     init {
         val messagesState = _messages
         this.viewModelScope.launch {
             try {
-                val committedSize = messagesState.filterIsInstance<Message.CommittedMessage>().size
-                val messages = core.messages(committedSize).await().map { Message.CommittedMessage(it) }
+                val committedSize = messagesState.filterIsInstance<Message.CommittedMessage>().size.toUInt()
+                val messages = core.messages(committedSize).map { Message.CommittedMessage(it) }
                 messagesState.addAll(messages)
             } catch (e: Exception) {
                 val message = e.message ?: ""
                 if (!message.contains("Cancelled Tesseract error")) {
-                    error(message)
+                    errorException(e)
                 }
             }
         }
     }
 
-    private suspend fun error(message: String) {
-        _failure.send(message)
+    private suspend fun errorException(exception: Throwable) {
+        _failure.send(exception)
     }
 
     fun login() {
         viewModelScope.launch {
             try {
-                _account.value = core.account().asDeferred().await()
+                _account.value = core.account()
             } catch (e: Exception) {
-                if (e !is UserCancelledException) {
-                    val message = e.message ?: ""
-                    error(message)
-                }
+                errorException(e)
             }
         }
     }
 
     fun sendMessage(message: String) {
-        val message = Message.SubmittedMessage(message)
+        @Suppress("NAME_SHADOWING") val message = Message.SubmittedMessage(message)
 
         viewModelScope.launch {
             try {
                 _messages.add(message)
-                core.send(message.text).await()
+                core.send(message.text)
                 val index = _messages.lastIndexOf(message)
                 _messages[index] = message.intoCommitted()
             } catch (e: Exception) {
-                @Suppress("NAME_SHADOWING") val error = e.message ?: ""
-                if (!error.contains("panicked")) /*we can't know more due to subxt::Signer limitations */ {
-                    error(error)
-                }
+                errorException(e)
 
                 _messages.remove(message)
             }
@@ -84,7 +71,7 @@ class MainViewModel(private val core: Core) : ViewModel() {
 
     fun presentError(message: String) {
         viewModelScope.launch {
-            _failure.send(message)
+            _failure.send(Exception("dApp Error: $message"))
         }
     }
 }

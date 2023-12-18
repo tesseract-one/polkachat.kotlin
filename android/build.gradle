@@ -7,7 +7,6 @@ android {
     namespace 'one.tesseract.polkachat'
 
     compileSdk rootProject.ext.compileSdkVersion
-    ndkVersion rootProject.ext.ndkVersion
 
     defaultConfig {
         applicationId "one.tesseract.polkachat"
@@ -48,26 +47,6 @@ android {
     }
 }
 
-apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
-
-task fixNotCopyingRustJniLibs(type: Delete) {
-    delete layout.buildDirectory.dir("intermediates/merged_jni_libs")
-}
-
-project.afterEvaluate {
-    tasks.getByName("mergeDebugJniLibFolders").dependsOn("cargoBuild")
-    tasks.getByName("mergeReleaseJniLibFolders").dependsOn("cargoBuild")
-    tasks.getByName("cargoBuild").dependsOn("fixNotCopyingRustJniLibs")
-}
-
-cargo {
-    module  = "../common"       // Or whatever directory contains your Cargo.toml
-    libname = "polkachat"          // Or whatever matches Cargo.toml's [package] name.
-    targets = rootProject.ext.rustNdkTargets  // See bellow for a longer list of options
-    targetDirectory = '../target'
-    rustupChannel = "nightly"
-}
-
 dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
@@ -80,9 +59,19 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
 
-    implementation "one.tesseract:crabdroid:0.3.0"
-    implementation "one.tesseract:base:$tesseractVersion"
-    implementation "one.tesseract:client-transport-ipc:$tesseractVersion"
+    //substrate
+    implementation("io.github.nova-wallet:substrate-sdk-android:1.9.1")
+    implementation("com.google.code.gson:gson:2.8.2")
+    implementation("com.neovisionaries:nv-websocket-client:2.10")
+
+    //utils
+    implementation 'one.tesseract:crabdroid:0.3.0'
+    implementation "one.tesseract:detached-activity:0.2.0"
+
+    //tesseract
+    implementation "one.tesseract:base:$rootProject.ext.tesseractVersion"
+    implementation "one.tesseract:common:$rootProject.ext.tesseractVersion"
+    implementation "one.tesseract:client:$rootProject.ext.tesseractVersion"
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

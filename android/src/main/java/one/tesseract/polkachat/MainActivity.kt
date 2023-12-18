@@ -1,6 +1,5 @@
 package one.tesseract.polkachat
 
-import android.content.res.Resources.Theme
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.MutableSharedFlow
-import one.tesseract.polkachat.rust.Core
+import one.tesseract.exception.UserCancelledException
 import one.tesseract.polkachat.ui.components.Messages
 import one.tesseract.polkachat.ui.components.SignIn
 import one.tesseract.polkachat.ui.components.UserControls
@@ -27,7 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val ui = UI()
-        val core = Core.create(application, ui, this.javaClass.classLoader!!)
+        val core = Core(application)
         val vm = ViewModelProvider(this, MainViewModelFactory(core)).get(MainViewModel::class.java)
         ui.model = vm
 
@@ -37,9 +36,13 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(key1 = true) {
                     vm.failure.collect {
-                        scaffoldState.snackbarHostState.showSnackbar(
-                            message = it
-                        )
+                        if (it !is UserCancelledException) {
+                            it.printStackTrace()
+                            val message = it.message ?: it.toString()
+                            scaffoldState.snackbarHostState.showSnackbar(
+                                message = message
+                            )
+                        }
                     }
                 }
 
@@ -63,7 +66,7 @@ class MainActivity : ComponentActivity() {
                                         modifier = Modifier.padding(bottom = 16.dp)
                                     )
                                     Text(
-                                        text = "Polkadot Demo dApp",
+                                        text = "Polkadot Demo dApp Kotlin",
                                         fontSize = 32.sp,
                                         modifier = Modifier.padding(bottom = 16.dp)
                                     )
