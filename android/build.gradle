@@ -9,7 +9,7 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "one.tesseract.polkachat"
+        applicationId "one.tesseract.polkachat.kotlin"
         minSdk rootProject.ext.minSdkVersion
         targetSdk rootProject.ext.targetSdkVersion
         versionCode 1

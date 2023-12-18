@@ -29,7 +29,6 @@ def devMode = devModeString == null ? false : devModeString == "true"
 if(devMode) {
     includeBuild('../Tesseract.android') {
         dependencySubstitution {
-            substitute module('one.tesseract:crabdroid') using project(':java:crabdroid')
             substitute module('one.tesseract:detached-activity') using project(':java:detached-activity')
             substitute module('one.tesseract:base') using project(':java:base')
             substitute module('one.tesseract:common') using project(':java:common')

@@ -6,7 +6,7 @@ buildscript {
         targetSdkVersion = 34
 
 
-        tesseractVersion = '0.5.5'
+        tesseractVersion = '0.5.6'
         navVersion = '2.7.4'
         composeVersion = '1.4.3'
         kotlinxVersion = '1.6.4'
