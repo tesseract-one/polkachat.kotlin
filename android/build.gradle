@@ -65,7 +65,6 @@ dependencies {
     implementation("com.neovisionaries:nv-websocket-client:2.10")
 
     //utils
-    implementation 'one.tesseract:crabdroid:0.3.0'
     implementation "one.tesseract:detached-activity:0.2.0"
 
     //tesseract
