@@ -62,29 +62,3 @@ class DAppSignerAdapter<A: DAppSigner.Account>(
         )
     }
 }
-
-class KeyPairSigner(private val pair: Sr25519Keypair): DAppSigner<KeyPairSigner.Account> {
-    class Account(override val id: AccountId): DAppSigner.Account
-
-    val account: Account
-        get() = Account(pair.publicKey)
-
-    override suspend fun sign(
-        account: Account,
-        payload: ByteArray,
-        types: ByteArray,
-        metadata: ByteArray
-    ): SignatureWrapper {
-        if (!account.id.contentEquals(pair.publicKey)) {
-            throw Exception("Different account id: ${account.id}, expected: ${pair.publicKey}")
-        }
-        val ext = if (payload.size > 256) {
-            payload.blake2b256()
-        } else {
-            payload
-        }
-        return MessageSigner.sign(
-            MultiChainEncryption.Substrate(EncryptionType.SR25519), ext, pair
-        )
-    }
-}
